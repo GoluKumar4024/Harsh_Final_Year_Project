@@ -99,7 +99,7 @@ void *clientThread(void *arg)
 
 		if (strcmp(message, "G") == 0)
 		{
-			// handle_groups();
+			handle_groups();
 		}
 	}
 
@@ -273,6 +273,15 @@ void handle_admin()
 			//for lines
 			for (int i = 0; i < numques; i++)
 			{
+
+				memset(buff, 0, sizeof(buff));
+				strcpy(buff, "token of appriciation");
+				//send token
+				if (send(clientSocket, buff, strlen(buff), 0) < 0)
+				{
+					printf("Receive failed at line %d\n", i);
+				}
+
 				memset(buff, 0, sizeof(buff));
 				//recieve and print line
 				if (recv(clientSocket, buff, 2048, 0) < 0)
@@ -292,3 +301,14 @@ void handle_admin()
 		}
 	}
 }
+
+void handle_groups(){
+	printf("handling groups\n");
+	char buffer[2048];
+
+	if(recv(clientSocket, buffer, 2048, 0) < 0){
+		printf("recieve failed\n");
+	}
+	printf("recieved: %s\n", buffer);
+}
+

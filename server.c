@@ -24,9 +24,13 @@ struct client
 	char mode;
 };
 
+pthread_mutex_t len_lock;
+
 char **arr[100];
 int ques_cnt[100];
 char titles[2048] = "";
+int len = 0;
+int client_sock[10];
 
 void *handle_connection(void *client_socket);
 int check(int exp, const char *msg);
@@ -323,6 +327,8 @@ void sendlist(int client_socket, int ques_cnt[], char titles[], char **arr[])
 
 	int lines;
 	char buffer[2048] = "";
+
+	// no titles
 	if (strcmp(titles, "") == 0)
 	{
 		strcpy(buffer, "0");
@@ -332,6 +338,7 @@ void sendlist(int client_socket, int ques_cnt[], char titles[], char **arr[])
 		}
 		return;
 	}
+
 	char **topics = NULL;
 	int topic_count = string_parser(titles, &topics, ",");
 	lines = topic_count;
@@ -352,8 +359,14 @@ void sendlist(int client_socket, int ques_cnt[], char titles[], char **arr[])
 	{
 		// printf("topic: ");
 		memset(buffer, 0, sizeof(buffer));
+		if (recv(client_socket, buffer, 2048, 0) < 0)
+		{
+			printf("recieve token failed\n");
+		}
+		memset(buffer, 0, sizeof(buffer));
 		strcpy(buffer, topics[topic]);
 		printf("buffer is now: %s\n", buffer);
+
 
 		if (send(client_socket, buffer, strlen(buffer), 0) < 0)
 		{
@@ -361,6 +374,11 @@ void sendlist(int client_socket, int ques_cnt[], char titles[], char **arr[])
 		}
 		for (int i = 0; i < ques_cnt[topic]; i++)
 		{
+			memset(buffer, 0, sizeof(buffer));
+			if (recv(client_socket, buffer, 2048, 0) < 0)
+			{
+				printf("recieve token failed\n");
+			}
 			memset(buffer, 0, sizeof(buffer));
 			strcpy(buffer, arr[topic][i]);
 			printf("buffer is now: %s\n", buffer);
@@ -439,7 +457,23 @@ void add(char str[], char titles[], char **arr[], int ques_cnt[])
 	free(ques);
 }
 
-void handle_groups(int client_socket){
+void handle_groups(int client_socket)
+{
+	//mutex lock len
+	pthread_mutex_lock(&len_lock);
+	int partner_index = (len == 0) ? 1 : 0;
+	client_sock[len++] = client_socket;
+	pthread_mutex_unlock(&len_lock);
 
-	
+	char buffer[2048];
+	sprintf(buffer, "I am client %d\n", partner_index);
+	while (len != 2)
+	{
+	}
+
+	if (send(client_sock[partner_index], buffer, strlen(buffer), 0) < 0)
+	{
+		printf("send failed\n");
+	}
+	memset(buffer, 0, sizeof(buffer));
 }
